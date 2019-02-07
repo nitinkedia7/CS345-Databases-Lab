@@ -24,6 +24,7 @@ INSERT INTO course (id, name, dept_id) VALUES ("CS344", "Databases", 1);
 INSERT INTO course (id, name, dept_id) VALUES ("CS345", "Databases Lab", 1);
 INSERT INTO course (id, name, dept_id) VALUES ("EE101", "Electrical Science", 3);
 INSERT INTO course (id, name, dept_id) VALUES ("XX000", "Deprecated Course", NULL);
+INSERT INTO course (id, name, dept_id) VALUES ("MA225", "Probability", 2);
 
 CREATE TABLE lecturer (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -35,6 +36,8 @@ CREATE TABLE lecturer (
 INSERT INTO lecturer (name, dept_id) VALUES ("Dr. Singh", 1);
 INSERT INTO lecturer (name, dept_id) VALUES ("Dr. Inkulu", 1);
 INSERT INTO lecturer (name, dept_id) VALUES ("Dr. Tony Jacob", 3);
+INSERT INTO lecturer (name, dept_id) VALUES ("Dr. Samir Kamal", 2);
+
 
 CREATE TABLE student (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -48,6 +51,7 @@ INSERT INTO student (name, dept_id) VALUES ("Sahib Khan", 1);
 INSERT INTO student (name, dept_id) VALUES ("Pant Rohit Rakesh", 1);
 INSERT INTO student (name, dept_id) VALUES ("Ram", 1);
 INSERT INTO student (name, dept_id) VALUES ("Shyam", 3);
+INSERT INTO student (name, dept_id) VALUES ("Shivam", 2);
 
 CREATE TABLE enroll (
     student_id INT NOT NULL,
@@ -64,6 +68,9 @@ INSERT INTO enroll (student_id, course_id, score) VALUES (2, "CS344", 3);
 INSERT INTO enroll (student_id, course_id, score) VALUES (2, "CS345", 4);
 INSERT INTO enroll (student_id, course_id, score) VALUES (3, "CS345", 5);
 INSERT INTO enroll (student_id, course_id, score) VALUES (1, "EE101", 6);
+-- INSERT INTO enroll (student_id, course_id, score) VALUES (1, "EE101", 6);
+INSERT INTO enroll (student_id, course_id, score) VALUES (6, "MA225", 10);
+
 
 CREATE TABLE teach (
     lecturer_id INT NOT NULL,
@@ -80,6 +87,9 @@ INSERT INTO teach (lecturer_id, course_id, dept_id) VALUES (3, "CS344", 1);
 INSERT INTO teach (lecturer_id, course_id, dept_id) VALUES (3, "XX000", NULL);
 INSERT INTO teach (lecturer_id, course_id, dept_id) VALUES (1, "CS345", 1);
 INSERT INTO teach (lecturer_id, course_id, dept_id) VALUES (3, "EE101", 3);
+INSERT INTO teach (lecturer_id, course_id, dept_id) VALUES (4, "MA225", 2);
+
+
 
 -- a
 SELECT name
