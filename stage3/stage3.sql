@@ -25,10 +25,25 @@ WHERE NOT EXISTS (
     (SELECT sp.course_id FROM enroll as sp WHERE sp.student_id=sx.student_id))
 );
 
+--b alter
+select distinct id,name from student where 
+    (select COUNT(course_id) from student_course where stud_id = "2")
+    =
+    (
+        SELECT COUNT(stud_id) from 
+        (
+            (select course_id from student_course where stud_id = "2") A
+            JOIN
+            student_course B
+            ON A.course_id = B.course_id
+        )
+        where stud_id =id
+    );
+
 --c
 -- select student who have attended any of the course offered by both lecturers
 SELECT DISTINCT name FROM student JOIN enroll ON id=student_id WHERE course_id IN (
-    SELECT course_id FROM teach WHERE lecturer_id=1 OR lecturer_id=2
+    SELECT course_id FROM teach WHERE lecturer_id=1 OR lecturer_id=2 
 );
 
 --d
@@ -76,22 +91,6 @@ SELECT name FROM student JOIN enroll ON id=student_id
 SELECT name FROM student JOIN enroll ON id=student_id WHERE course_id="CS345" AND score >
 (SELECT AVG(score) FROM enroll WHERE course_id="CS344");
 
-
---b alter
-select distinct id,name from student where 
-    (select COUNT(course_id) from student_course where stud_id = "2")
-    =
-    (
-        SELECT COUNT(stud_id) from 
-        (
-            (select course_id from student_course where stud_id = "2") A
-            JOIN
-            student_course B
-            ON A.course_id = B.course_id
-        )
-        where stud_id =id
-    );
-
 -- f
 SELECT dept_id, COUNT(*) FROM lecturer GROUP BY dept_id;
 -- f with dept names
@@ -115,8 +114,14 @@ GROUP BY dept_id, course_id;
 SELECT * FROM student JOIN enroll ON id=student_id ORDER BY dept_id, course_id;
 
 --i
-SELECT name, course_id, AVG(score) as max_avg_score, dept_id FROM enroll JOIN course as SX ON course_id=id GROUP BY course_id 
-HAVING max_avg_score >= ALL (SELECT AVG(score) FROM enroll JOIN (SELECT * FROM course WHERE dept_id=1) as SP ON course_id=id GROUP BY course_id);
+
+SELECT * FROM 
+    (SELECT name, course_id, AVG(score) as avg_score, dept_id FROM enroll JOIN course ON course_id=id GROUP BY course_id) SX
+    JOIN (SELECT dept_id, MAX(avg_score) as max_score FROM (SELECT name, course_id, AVG(score) as avg_score, dept_id FROM enroll JOIN course ON course_id=id GROUP BY course_id) C GROUP BY dept_id) B 
+    ON SX.dept_id=B.dept_id AND SX.avg_score=B.max_score;
+
+-- SELECT name, course_id, AVG(score) as max_avg_score, dept_id FROM enroll JOIN course as SX ON course_id=id GROUP BY course_id 
+-- HAVING max_avg_score >= ALL (SELECT AVG(score) FROM enroll JOIN (SELECT * FROM course WHERE dept_id=1) as SP ON course_id=id GROUP BY course_id);
 
 -- SELECT dept_id, name, MAX(avg_score) FROM (
 -- SELECT name, course_id, AVG(score) as avg_score, dept_id FROM enroll JOIN course ON course_id=id GROUP BY course_id) A GROUP BY dept_id;
