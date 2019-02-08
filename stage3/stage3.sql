@@ -10,6 +10,10 @@ SELECT DISTINCT name FROM student JOIN enroll ON id=student_id WHERE course_id N
     SELECT course_id FROM enroll WHERE student_id = 4
 );
 
+-- a.3 (not exists)
+SELECT DISTINCT name FROM student JOIN enroll AS sx ON id=student_id
+WHERE NOT EXISTS (SELECT * FROM enroll WHERE student_id=4 AND course_id=sx.course_id);
+
 --b
 -- Method1 intersection of students in each of given student's course
 -- Method2 student_id in enroll who have all course opted by given student
@@ -69,3 +73,55 @@ SELECT name FROM student JOIN enroll ON id=student_id
 -- average of other course
 SELECT name FROM student JOIN enroll ON id=student_id WHERE course_id="CS345" AND score >
 (SELECT AVG(score) FROM enroll WHERE course_id="CS344");
+
+
+--b alter
+select distinct id,name from student where 
+    (select COUNT(course_id) from student_course where stud_id = "2")
+    =
+    (
+        SELECT COUNT(stud_id) from 
+        (
+            (select course_id from student_course where stud_id = "2") A
+            JOIN
+            student_course B
+            ON A.course_id = B.course_id
+        )
+        where stud_id =id
+    );
+
+-- f
+SELECT dept_id, COUNT(*) FROM lecturer GROUP BY dept_id;
+-- f with dept names
+SELECT name, c FROM department JOIN 
+(SELECT dept_id, COUNT(*) as c FROM lecturer GROUP BY dept_id) A ON id=dept_id;
+
+--g
+SELECT * FROM student WHERE NOT EXISTS (
+    SELECT * FROM enroll JOIN teach ON enroll.course_id=teach.course_id WHERE student_id=id AND lecturer_id=4
+);
+
+--h
+-- course wise average marks of students of each department
+-- output:  dept_id course_id course_avg
+SELECT dept_id, course_id, AVG(score) FROM student JOIN enroll ON id=student_id
+GROUP BY dept_id, course_id;
+
+-- check
+SELECT * FROM student JOIN enroll ON id=student_id ORDER BY dept_id, course_id;
+
+--i
+SELECT name, course_id, AVG(score) as a, dept_id FROM enroll JOIN course as SX ON course_id=id GROUP BY course_id 
+HAVING a >= ALL (SELECT AVG(score) FROM enroll JOIN (SELECT * FROM course WHERE dept_id=1) as SP ON course_id=id GROUP BY course_id);
+
+--j
+SELECT
+    CASE WHEN score < 4 THEN 'F'
+         WHEN score >= 4 AND score < 7 THEN 'B'
+         WHEN score >= 7 THEN 'A'
+    END Grade,
+    COUNT(*) AS StudentCount
+FROM enroll WHERE course_id="MA225" GROUP BY 1;
+
+-- check
+SELECT * FROM enroll WHERE course_id="MA225";
