@@ -1,0 +1,292 @@
+-- MySQL dump 10.13  Distrib 5.7.25, for Linux (x86_64)
+--
+-- Host: localhost    Database: university
+-- ------------------------------------------------------
+-- Server version	5.7.25-0ubuntu0.18.10.2
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `course`
+--
+
+DROP TABLE IF EXISTS `course`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `course` (
+  `id` char(5) NOT NULL,
+  `name` varchar(128) NOT NULL,
+  `dept_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `dept_id` (`dept_id`),
+  CONSTRAINT `course_ibfk_1` FOREIGN KEY (`dept_id`) REFERENCES `department` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `course`
+--
+
+LOCK TABLES `course` WRITE;
+/*!40000 ALTER TABLE `course` DISABLE KEYS */;
+INSERT INTO `course` VALUES ('CS344','Databases',1),('CS345','Databases Lab',1),('EE101','Electrical Science',3),('MA225','Probability',2);
+/*!40000 ALTER TABLE `course` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `department`
+--
+
+DROP TABLE IF EXISTS `department`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `department` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(128) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `department`
+--
+
+LOCK TABLES `department` WRITE;
+/*!40000 ALTER TABLE `department` DISABLE KEYS */;
+INSERT INTO `department` VALUES (1,'CSE'),(2,'MnC'),(3,'ECE');
+/*!40000 ALTER TABLE `department` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `enroll`
+--
+
+DROP TABLE IF EXISTS `enroll`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `enroll` (
+  `student_id` int(11) NOT NULL,
+  `course_id` char(5) NOT NULL,
+  `score` int(11) NOT NULL,
+  `attendance` int(11) DEFAULT '75',
+  `grade` char(1) DEFAULT NULL,
+  PRIMARY KEY (`student_id`,`course_id`),
+  KEY `course_id` (`course_id`),
+  KEY `course_score` (`course_id`,`score`),
+  CONSTRAINT `enroll_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `student` (`id`),
+  CONSTRAINT `enroll_ibfk_2` FOREIGN KEY (`course_id`) REFERENCES `course` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `enroll`
+--
+
+LOCK TABLES `enroll` WRITE;
+/*!40000 ALTER TABLE `enroll` DISABLE KEYS */;
+INSERT INTO `enroll` VALUES (1,'CS344',90,75,NULL),(1,'CS345',100,100,NULL),(1,'EE101',60,75,NULL),(1,'MA225',0,75,NULL),(2,'CS344',30,75,NULL),(2,'CS345',80,100,NULL),(2,'MA225',60,75,NULL),(3,'CS344',100,75,NULL),(3,'CS345',50,100,NULL),(4,'EE101',70,75,NULL),(5,'CS344',70,75,NULL),(5,'CS345',60,100,NULL),(6,'CS345',0,75,'F'),(6,'EE101',50,75,'B'),(6,'MA225',100,75,NULL),(7,'CS344',80,90,NULL),(7,'CS345',80,75,'A'),(7,'EE101',50,75,'B'),(7,'MA225',0,75,'F');
+/*!40000 ALTER TABLE `enroll` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER valid_score_insert BEFORE INSERT ON enroll
+FOR EACH ROW
+BEGIN
+    IF (NEW.score < 0) THEN
+        SET NEW.score = 0;
+    END IF;
+    IF (NEW.score > 100) THEN
+        SET NEW.score = 100;
+    END IF;
+    IF (NEW.score < 40) THEN
+        SET NEW.grade = 'F';
+    END IF;
+    IF (NEW.score >= 40 AND NEW.score < 70) THEN
+        SET NEW.grade = 'B';
+    END IF;
+    IF (NEW.score >= 70) THEN
+        SET NEW.grade = 'A';
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+
+--
+-- Temporary table structure for view `enrolled_course_name`
+--
+
+DROP TABLE IF EXISTS `enrolled_course_name`;
+/*!50001 DROP VIEW IF EXISTS `enrolled_course_name`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE VIEW `enrolled_course_name` AS SELECT 
+ 1 AS `student_id`,
+ 1 AS `name`*/;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `grades`
+--
+
+DROP TABLE IF EXISTS `grades`;
+/*!50001 DROP VIEW IF EXISTS `grades`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE VIEW `grades` AS SELECT 
+ 1 AS `student_id`,
+ 1 AS `course_id`,
+ 1 AS `score`,
+ 1 AS `attendance`,
+ 1 AS `grade`*/;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Table structure for table `lecturer`
+--
+
+DROP TABLE IF EXISTS `lecturer`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `lecturer` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(128) NOT NULL,
+  `dept_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `dept_id` (`dept_id`),
+  CONSTRAINT `lecturer_ibfk_1` FOREIGN KEY (`dept_id`) REFERENCES `department` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `lecturer`
+--
+
+LOCK TABLES `lecturer` WRITE;
+/*!40000 ALTER TABLE `lecturer` DISABLE KEYS */;
+INSERT INTO `lecturer` VALUES (1,'Dr. Singh',1),(2,'Dr. Inkulu',1),(3,'Dr. Tony Jacob',3),(4,'Dr. Samir Kamal',2);
+/*!40000 ALTER TABLE `lecturer` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `student`
+--
+
+DROP TABLE IF EXISTS `student`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `student` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(128) NOT NULL,
+  `dept_id` int(11) NOT NULL,
+  `fname` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `dept_id` (`dept_id`),
+  KEY `student_name` (`fname`),
+  CONSTRAINT `student_ibfk_1` FOREIGN KEY (`dept_id`) REFERENCES `department` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `student`
+--
+
+LOCK TABLES `student` WRITE;
+/*!40000 ALTER TABLE `student` DISABLE KEYS */;
+INSERT INTO `student` VALUES (1,'Nitin Kedia',1,'Nitin'),(2,'Sahib Khan',1,'Sahib'),(3,'Pant Rohit Rakesh',1,'Rohit'),(4,'Ram',1,'Ram'),(5,'Shyam',3,'Shyam'),(6,'Shivam',2,'Shivam'),(7,'Harshit Kedia',1,'Harshit');
+/*!40000 ALTER TABLE `student` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `teach`
+--
+
+DROP TABLE IF EXISTS `teach`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `teach` (
+  `lecturer_id` int(11) NOT NULL,
+  `course_id` char(5) NOT NULL,
+  `dept_id` int(11) NOT NULL,
+  PRIMARY KEY (`lecturer_id`,`course_id`),
+  KEY `dept_id` (`dept_id`,`lecturer_id`),
+  KEY `dept_id_2` (`dept_id`,`course_id`),
+  CONSTRAINT `teach_ibfk_1` FOREIGN KEY (`dept_id`, `lecturer_id`) REFERENCES `lecturer` (`dept_id`, `id`),
+  CONSTRAINT `teach_ibfk_2` FOREIGN KEY (`dept_id`, `course_id`) REFERENCES `course` (`dept_id`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `teach`
+--
+
+LOCK TABLES `teach` WRITE;
+/*!40000 ALTER TABLE `teach` DISABLE KEYS */;
+INSERT INTO `teach` VALUES (1,'CS344',1),(1,'CS345',1),(2,'CS344',1),(4,'MA225',2),(3,'EE101',3);
+/*!40000 ALTER TABLE `teach` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Final view structure for view `enrolled_course_name`
+--
+
+/*!50001 DROP VIEW IF EXISTS `enrolled_course_name`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `enrolled_course_name` AS select `enroll`.`student_id` AS `student_id`,`course`.`name` AS `name` from (`enroll` join `course` on((`enroll`.`course_id` = `course`.`id`))) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `grades`
+--
+
+/*!50001 DROP VIEW IF EXISTS `grades`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `grades` AS select `enroll`.`student_id` AS `student_id`,`enroll`.`course_id` AS `course_id`,`enroll`.`score` AS `score`,`enroll`.`attendance` AS `attendance`,`enroll`.`grade` AS `grade` from `enroll` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2019-02-15 11:22:47

@@ -67,14 +67,6 @@ WHERE NOT EXISTS (
     (SELECT sp.course_id FROM enroll as sp WHERE sp.student_id=sx.student_id))
 );
 
--- ALTER TABLE student ADD fname VARCHAR(20);
--- UPDATE student SET fname="Nitin" WHERE id=1;
--- UPDATE student SET fname="Sahib" WHERE id=2;
--- UPDATE student SET fname="Rohit" WHERE id=3;
--- UPDATE student SET fname="Ram" WHERE id=4;
--- UPDATE student SET fname="Shyam" WHERE id=5;
--- UPDATE student SET fname="Shivam" WHERE id=6;
-
 --7
 -- CREATE VIEW grades AS SELECT
 --     student_id,
