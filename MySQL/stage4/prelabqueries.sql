@@ -95,4 +95,4 @@ INSERT INTO grades(student_id, course_id, score) VALUES (6, "EE101", 50);
 -- 9
 ALTER TABLE enroll ADD grade CHAR(1);
 -- modified trigger in 5th question
-INSERT INTO enroll(student_id, course_id, score) VALUES (7, "CS345", 80);
+INSERT INTO enroll(student_id, course_id, score) VALUES (6, "CS345", -10);
