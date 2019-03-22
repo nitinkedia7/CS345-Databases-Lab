@@ -26,23 +26,43 @@ public:
     void insertElement(int v) {
         int buckets = pow(2, gd);
         int bi = v % buckets;
-        // cout << this->dir[bi]->bucket.size() << "" << this->bs << endl;
-        // return;
         if (this->dir[bi]->bucket.size() < this->bs) {
             this->dir[bi]->bucket.push_back(v);
             return;
         } 
         else {
-            // cout << "hello" <<endl;
-            // return;
-            if (this->dir[bi]->ld == this->gd) { // double then split
-                this->doubleHashTable();
-                this->splitBucket(bi);
+            if (this->dir[bi]->ld == this->gd) { 
+                if (this->dir[bi]->bucket.size() > this->bs) {// scenario 2.1
+                    this->dir[bi]->bucket.push_back(v);
+                }
+                else { // 2.2
+                    bool flag = true;
+                    for (int i = 0; i < this->dir.size(); i++) {
+                        assert(this->dir[i]->ld == this->gd);
+                        if (i != bi) {
+                            if (this->dir[i]->bucket.size() <= this->bs) {
+                                flag = false;
+                            }
+                        }
+                    }
+                    // cout << "all overflow " << flag << endl;
+                    if (flag) { // push v then double then split all /* 2.2.2 */
+                        this->dir[bi]->bucket.push_back(v);
+                        int oldSize = this->dir.size();
+                        this->doubleHashTable();
+                        for (int i = 0; i < oldSize; i++) {
+                            this->splitBucket(i);
+                        }
+                    }
+                    else { //2.2.1
+                        this->dir[bi]->bucket.push_back(v);                
+                    }
+                }
             }
-            else { // only split
+            else { // screnario 1 ld < gd
                 this->splitBucket(bi);
+                this->insertElement(v);
             }
-            this->insertElement(v);
             return;
         }
     }
@@ -112,6 +132,26 @@ public:
             }
         }
     }
+    void printHashTable2() {
+        cout<<"\n ***** Hash Table ***** \n"<<endl;
+	    cout<<"globalDepth :: " << this->gd<<endl;
+        cout<<"bucketIndex :: | Elements |"<<endl;
+        for (int i = 0; i < this->dir.size(); i++) {
+            int powld = pow(2, this->dir[i]->ld);
+            if (i % powld == i) {
+                cout << i << " :: | ";
+                list<int> &bucket = this->dir[i]->bucket;
+                for (auto itr = bucket.begin(); itr != bucket.end(); itr++) {
+                    cout << *itr << " ";
+                }
+                cout << "|\n";
+            } 
+            else {
+                cout << i << " :: points to " << i%powld;
+                cout << endl; 
+            }
+        }
+    }
 }; 
 
 int main() {
@@ -166,7 +206,7 @@ int main() {
                     cout<<"Element is not found"<<endl;
                 break;
             case 5:
-                d->printHashTable();
+                d->printHashTable2();
                 break;
             default:
                 return 0;
