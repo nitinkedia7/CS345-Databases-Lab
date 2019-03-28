@@ -6,10 +6,12 @@ public:
     int numKeys;
     int t;
     int *keys;
+    void *parent;
     
     Node(int t) {
         this->t = t;
         this->numKeys = 0;
+        this->parent = NULL;
     }
 };
 
@@ -110,6 +112,17 @@ public:
             newRoot->keys[0] = up;
             newRoot->ptrs[0] = this->root;
             newRoot->ptrs[1] = newChild;
+            if (this->depth == 0) {
+                DataNode *oldRoot = (DataNode *) this->root;
+                oldRoot->parent = newRoot;
+                ((DataNode*) newChild)->parent = newRoot;
+            }
+            else {
+                IndexNode *oldRoot = (IndexNode *) this->root;
+                oldRoot->parent = newRoot;
+                ((IndexNode*) newChild)->parent = newRoot;
+
+            }
             this->root = newRoot;
             this->depth++;
         }
@@ -172,6 +185,7 @@ public:
         }
         node->numKeys = t;
         (*pnewNonLeaf)->numKeys = t-1;
+        (*pnewNonLeaf)->parent = node->parent;
         return;
     }
 
@@ -186,12 +200,14 @@ public:
         (*pnewLeaf)->left = node; 
         node->right = *pnewLeaf;
 
-        *up = (node->keys[t] + node->keys[t+1])/2;
+        // *up = (node->keys[t] + node->keys[t+1])/2;
+        *up = node->keys[t+1];
         for (int i = 2*t; i > t; i--) {
             (*pnewLeaf)->keys[i-t-1] = node->keys[i];
         }
         node->numKeys = t+1;
         (*pnewLeaf)->numKeys = t;
+        (*pnewLeaf)->parent = node->parent;
         return;
     }
 
@@ -228,6 +244,11 @@ public:
                 for(int i=0; i<node->numKeys; i++){
                     cout<<node->keys[i]<<" ";
                 }
+                IndexNode *parent = (IndexNode *) node->parent;
+                // if (parent == NULL) {
+                //     cout << "\t" << "NULL";
+                // }
+                // else cout << "\t" << parent->keys[0];
                 cout<<endl;
             }
             else{
@@ -239,6 +260,11 @@ public:
                 for(int i=0; i<node->numKeys; i++){
                     cout<<node->keys[i]<<" ";
                 }
+                IndexNode *parent = (IndexNode *) node->parent;
+                // if (parent == NULL) {
+                //     cout << "\t" << "NULL";
+                // }
+                // else cout << "\t" << parent->keys[0];
                 cout<<endl;
             }
         }
