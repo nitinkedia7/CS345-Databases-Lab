@@ -42,8 +42,8 @@ public:
     DataNode *left, *right;
     DataNode(int t) : Node(t) {
         keys = new int[2*t+1];
-        left = NULL;
-        right = NULL; 
+        left = this;
+        right = this; 
     }
     void InsertKey(int key) {
         if (this->numKeys == 0) {
@@ -72,12 +72,13 @@ public:
 class BPlusTree {
 public:
     int depth;
-    int t;
+    int t_index, t_data;
     void * root;
-    BPlusTree(int t) {
+    BPlusTree(int t_index, int t_data) {
         this->depth = 0;
-        this->t = t;
-        this->root = new DataNode(t);
+        this->t_index = t_index;
+        this->t_data = t_data;
+        this->root = new DataNode(t_data);
     }
     DataNode *search(void *node, int key, int depth) {
         if (depth == 0) { // reached appropriate leaf datanode
@@ -93,12 +94,10 @@ public:
             IndexNode *curNode = (IndexNode *) node;
             for (int i = 0; i < curNode->numKeys; i++) {
                 if (key <= curNode->keys[i]) {
-                    return search(curNode->ptrs[i], key, depth--);
-                }
-                if (i == curNode->numKeys-1) {
-                    return search(curNode->ptrs[i+1], key, depth--);
+                    return search(curNode->ptrs[i], key, depth-1);
                 }
             }
+            return search(curNode->ptrs[curNode->numKeys], key, depth-1);
         }
     }
     void insertmain(int key) {
@@ -106,7 +105,7 @@ public:
         void *newChild = insert(this->root, key, this->depth, &up);
         if (this->root != newChild) {
             // make a new root;
-            IndexNode *newRoot = new IndexNode(this->t);
+            IndexNode *newRoot = new IndexNode(this->t_index);
             newRoot->numKeys++;
             newRoot->keys[0] = up;
             newRoot->ptrs[0] = this->root;
@@ -119,7 +118,7 @@ public:
     void *insert(void *node, int key, int depth, int *up) {
         if (depth == 0) { // reached datanode, attempt insert
             DataNode *root = (DataNode *) node; 
-            if (root->numKeys < 2 * this->t) { // insert to nonfull datanode 
+            if (root->numKeys < 2 * root->t) { // insert to nonfull datanode 
                 root->InsertKey(key);
                 return (void *) root; // if no split return the same ptr;
             }
@@ -145,7 +144,7 @@ public:
                 return (void *) curNode;
             }
             else { // need to split curNode which is an indexnode
-                if (curNode->numKeys < 2*t-1) {
+                if (curNode->numKeys < 2*curNode->t-1) {
                     curNode->InsertNonFull(*up, pos, newChild);
                     return (void *) curNode; 
                 }
@@ -181,7 +180,13 @@ public:
         node->InsertKey(key);
         assert(node->numKeys == 2*t+1);
         *pnewLeaf = new DataNode(t);
-        *up = (node->keys[t] + node->keys[t+1])/2; 
+
+        node->right->left = *(pnewLeaf);
+        (*pnewLeaf)->right = node->right;
+        (*pnewLeaf)->left = node; 
+        node->right = *pnewLeaf;
+
+        *up = (node->keys[t] + node->keys[t+1])/2;
         for (int i = 2*t; i > t; i--) {
             (*pnewLeaf)->keys[i-t-1] = node->keys[i];
         }
@@ -209,6 +214,16 @@ public:
             level.pop();
             cout<<curNode.first<< " :: " << curLevel << " :: ";
             if(depth==0){
+                // DataNode *node = (DataNode*)(curNode.second); // to check doubly linked list of leafs
+                // DataNode *start = node;
+                // do {
+                //     for(int i=0; i<node->numKeys; i++){
+                //         cout<<node->keys[i]<<" ";
+                //     }
+                //     cout<<endl;
+                //     node = node->right;
+                // } while (node != start);
+                // return;
                 DataNode *node = (DataNode*)(curNode.second);
                 for(int i=0; i<node->numKeys; i++){
                     cout<<node->keys[i]<<" ";
@@ -260,12 +275,12 @@ int main()
             cin >> numIndexPointers;
             cout << "Enter number of Data pointers: ";
             cin >> numDataPointers;
-            // if (numIndexPointers % 2 == 0 || numDataPointers % 2)
-            // {
-            //     cout << "Note:: Index pointers must be in odd number and Data pointers must be in even number" << endl;
-            //     exit(0);
-            // }
-            tree = new BPlusTree(numIndexPointers);
+            if (numIndexPointers % 2 == 0 || numDataPointers % 2)
+            {
+                cout << "Note:: Index pointers must be in odd number and Data pointers must be in even number" << endl;
+                exit(0);
+            }
+            tree = new BPlusTree((numIndexPointers+1)/2, numDataPointers/2);
             break;
 
         case 2:
@@ -274,7 +289,7 @@ int main()
                 cout << "Create a new tree first" << endl;
                 break;
             }
-            cout << "Enter key to add ";
+            cout << "Enter key to add: ";
             cin >> key;
             tree->insertmain(key);
             break;
