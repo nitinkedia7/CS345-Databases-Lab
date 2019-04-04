@@ -25,11 +25,11 @@ void Page :: fillPage(vector<int> &v){
 	for(i; i < v.size() && i < DISK_PAGE_SIZE; i++){
 		if(v[i] == -1){
 			this->validEntries = i;
-			break;
+			// break;
 		}
 		this->arr[i] = v[i];
 	}
-	for (int i = this->validEntries; i < v.size() && i < DISK_PAGE_SIZE; i++) {
-		this->arr[i] = -1;
-	}
+	// for (int i = this->validEntries; i < v.size() && i < DISK_PAGE_SIZE; i++) {
+	// 	this->arr[i] = -1;
+	// }
 }

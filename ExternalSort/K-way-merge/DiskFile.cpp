@@ -10,7 +10,10 @@ void DiskFile :: readDiskFile(){
 	vector<int> temp(DISK_PAGE_SIZE,-1);
 	bool flag = true;
 	int x;
-	while(cin >> x){
+	int n;
+	cin >> n;
+	while(n > 0){
+		cin >> x;
 		flag = false;
 		temp[i++] = x;
 		this->size++;
@@ -22,6 +25,7 @@ void DiskFile :: readDiskFile(){
 			this->totalPages++;
 			i = 0;
 		}
+		n--;
 	}
 
 	if(!flag){
