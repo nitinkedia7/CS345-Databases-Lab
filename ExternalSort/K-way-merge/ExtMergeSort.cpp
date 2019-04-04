@@ -44,7 +44,7 @@ void ExtMergeSort :: firstPass(DiskFile &inputFile, MainMemory &memory){
 
 //Performs merging of B-1 runs of runSize each
 void ExtMergeSort :: merge(DiskFile &inputFile, MainMemory &memory, int leftStart, int runSize){
-	int k = this->b - 1;
+	int k = (this->b)/2 - 1;
 	vector<int> runs, runsEnd;
 	int rightEnd = min(leftStart + k*runSize, inputFile.totalPages);
 
@@ -55,23 +55,32 @@ void ExtMergeSort :: merge(DiskFile &inputFile, MainMemory &memory, int leftStar
 	assert(runs.size() <= k);
 	DiskFile tempFile(rightEnd-leftStart);
 
-	vector<int> frames, indexes;
+	vector<pair<int, int>> frames;
+	vector<int> indexes, flip;
+	int f1, f2;
 	for (int i = 0; i < runs.size(); i++) {
-		int f = memory.loadPage(inputFile, runs[i]);
-		if (f == -1) {
+		f1 = -1; f2 = -1;
+		f1 = memory.loadPage(inputFile, runs[i]);
+		if (f1 == -1) {
 			cout << "Can't proceed further due to unavailability of memory or invalid Page access" << endl;
 			exit(1); 
 		}
-		frames.push_back(f);
+		if (runs[i] < runsEnd[i]-1) {
+			runs[i]++;
+			f2 = memory.loadPage(inputFile, runs[i]);
+		}
+		frames.push_back(make_pair(f1, f2));
 		indexes.push_back(0);
-
+		flip.push_back(0);
 	}
+
 	for (int i = 0; i < runs.size(); i++) {
-		cout << runs[i] << ", " << runsEnd[i] << ", " << frames[i] << ", " << indexes[i] << "\t";
+		cout << runs[i]-1 << ", " << runsEnd[i] << ", " << frames[i].first << ", " << frames[i].second << ", " << indexes[i] << "\t";
 	}
 	cout << endl;
-	int resFrame = memory.getEmptyFrame();	//frame to store result
-	int resIndex = 0, currPage = 0;
+	int resFrame = memory.getEmptyFrame(), resFrame2 = memory.getEmptyFrame();	//frame to store result
+	cout << resFrame << ", " << resFrame2 << endl;
+	int resIndex = 0, currPage = 0, resFlip = 0;
 	bool flag = false; // is there a pending number to be written
 	bool over;
 	while (!over) {
@@ -80,19 +89,44 @@ void ExtMergeSort :: merge(DiskFile &inputFile, MainMemory &memory, int leftStar
 		int f = -1;
 		over = true;
 		flag = false;
+		int index, frame;
 		for (int i = 0; i < runs.size(); i++) {
-			int index = indexes[i];
-			if (index == memory.getValidEntries(frames[i]) && runs[i] < runsEnd[i]-1) { // fetch new page
-				memory.freeFrame(frames[i]);
-				runs[i] += 1;
-				frames[i] = memory.loadPage(inputFile, runs[i]);
-				indexes[i] = 0;	
-				index = 0;			
+			index = indexes[i];
+			if (flip[i] == 0) {
+				frame = frames[i].first;
+				if (index == memory.getValidEntries(frames[i].first)) { 
+					memory.freeFrame(frames[i].first);
+					frames[i].first = -1;
+					if (runs[i] < runsEnd[i]-1) {
+						runs[i] += 1;
+						frames[i].first = memory.loadPage(inputFile, runs[i]);
+					}
+					indexes[i] = 0;	
+					index = 0;
+					flip[i] = 1;
+					frame = frames[i].second;
+				}
 			}
-			if (index < memory.getValidEntries(frames[i])) {
+			if (flip[i] == 1) { 
+				frame = frames[i].second;
+				if (index == memory.getValidEntries(frames[i].second)) { // fetch new page
+					memory.freeFrame(frames[i].second);
+					frames[i].second = -1;
+					if (runs[i] < runsEnd[i]-1) {
+						runs[i] += 1;
+						frames[i].second = memory.loadPage(inputFile, runs[i]);
+					}
+					indexes[i] = 0;	
+					index = 0;
+					flip[i] = 0;			
+					frame = frames[i].first;					
+				}
+			}
+			index = indexes[i];
+			if (index < memory.getValidEntries(frame)) {
 				over = false;
 				flag = true;
-				int c = memory.getVal(frames[i], index);
+				int c = memory.getVal(frame, index);
 				if (x > c) {
 					x = c;
 					f = i;
@@ -100,26 +134,57 @@ void ExtMergeSort :: merge(DiskFile &inputFile, MainMemory &memory, int leftStar
 			}
 		}
 		if (flag) {
-			memory.setVal(resFrame, resIndex, x);
-			// cout << x << endl;
-			indexes[f]++;
-			resIndex++;
-			if(resIndex == MEM_FRAME_SIZE){
-				memory.writeFrame(tempFile, resFrame, currPage);
-				memory.freeFrame(resFrame);
-				resFrame = memory.getEmptyFrame();
-				currPage++; 
-				resIndex = 0;
+			if (resFlip == 0) {
+				memory.setVal(resFrame, resIndex, x);
+				// cout << x << endl;
+				indexes[f]++;
+				resIndex++;
+				if(resIndex == MEM_FRAME_SIZE){
+					memory.writeFrame(tempFile, resFrame, currPage);
+					memory.freeFrame(resFrame);
+					resFrame = memory.getEmptyFrame();
+					currPage++; 
+					resIndex = 0;
+					resFlip = 1;
+					// flag = false;
+				}
+			}
+			else {
+				memory.setVal(resFrame2, resIndex, x);
+				// cout << x << endl;
+				indexes[f]++;
+				resIndex++;
+				if(resIndex == MEM_FRAME_SIZE){
+					memory.writeFrame(tempFile, resFrame2, currPage);
+					memory.freeFrame(resFrame2);
+					resFrame2 = memory.getEmptyFrame();
+					currPage++; 
+					resIndex = 0;
+					resFlip = 0;
+					// flag = false;
+				}	
 			}
 		}
 	}
+	// cout << resIndex << " idjed" << endl;
 	if (resIndex > 0) {
-		memory.writeFrame(tempFile, resFrame, currPage);
+		if (resFlip == 0) {
+			memory.writeFrame(tempFile, resFrame, currPage);
+		}
+		else {
+			memory.writeFrame(tempFile, resFrame2, currPage);
+		}
 	}
 	for (int i = 0; i < runs.size(); i++) {
-		memory.freeFrame(frames[i]);
+		memory.freeFrame(frames[i].first);
+		memory.freeFrame(frames[i].second);
 	}
-	memory.freeFrame(resFrame);
+	// if (resFlip == 0) {
+		memory.freeFrame(resFrame);
+	// }
+	// else {
+		memory.freeFrame(resFrame2);
+	// }
 	inputFile.DiskFileCopy(tempFile, leftStart, rightEnd);
 }
 
@@ -131,7 +196,7 @@ void ExtMergeSort :: kWaySort(DiskFile &inputFile, MainMemory &memory){
 	this->firstPass(inputFile, memory);
 
 	int leftStart;
-	int k = this->b - 1;	
+	int k = (this->b)/2 - 1;	
 	for(this->runSize = this->b; this->runSize < inputFile.totalPages; this->runSize *= k){
 		cout << "runSize: " << this->runSize << endl;
 		for(leftStart = 0; leftStart < inputFile.totalPages-1; leftStart += k*this->runSize){

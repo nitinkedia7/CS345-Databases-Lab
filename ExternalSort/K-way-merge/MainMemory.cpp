@@ -34,7 +34,7 @@ int MainMemory :: getEmptyFrame(){
 
 //returns number of valid entries in frame f
 int MainMemory :: getValidEntries(int f){
-	if(f >= this->totalFrames || !this->valid[f])
+	if(f < 0 || f >= this->totalFrames || !this->valid[f])
 		return -1;
 	return this->data[f].validEntries;
 }
@@ -71,7 +71,7 @@ void MainMemory :: writeFrame(DiskFile &inputFile, int f, int p){
 
 //clears frame f
 void MainMemory :: freeFrame(int f){
-	if(f < totalFrames)
+	if(f >= 0 && f < totalFrames)
 		this->valid[f] = false;
 }	
 

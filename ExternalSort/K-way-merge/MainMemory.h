@@ -27,6 +27,6 @@ public:
 	void setVal(int f, int i, int val);
 	void writeFrame(DiskFile &inputFile, int f, int p);
 	void freeFrame(int f);
-	int bubbleSortPass(int f, int a);
+	// int bubbleSortPass(int f, int a);
 	
 };

@@ -16,15 +16,12 @@ int main()
 	//create main memory of x frames
 	MainMemory mm(x);
 
-	int b;
-	cin >> b;
-
 	//create a file by taking input from cin
 	DiskFile f;
 	f.readDiskFile();
 	f.writeDiskFile();
 
-	ExtMergeSort e(b);
+	ExtMergeSort e(x);
 	
 	//call 2 way externalmerge sort
 	e.kWaySort(f,mm);
