@@ -1,9 +1,10 @@
-#include <iostream>
-#include <cmath>
-#include <vector>
-#include <algorithm>
-#include <climits>
-#include <cassert>
+// #include <iostream>
+// #include <cmath>
+// #include <vector>
+// #include <algorithm>
+// #include <climits>
+// #include <cassert>
+#include <bits/stdc++.h>
 
 using namespace std;
 int DISK_PAGE_SIZE;
@@ -215,8 +216,6 @@ public:
 	void setVal(int f, int i, int val);
 	void writeFrame(DiskFile &inputFile, int f, int p);
 	void freeFrame(int f);
-	int bubbleSortPass(int f, int a);
-	
 };
 
 //loads nth page of disk file f to an empty frame if available
@@ -294,44 +293,56 @@ void MainMemory :: freeFrame(int f){
 		this->valid[f] = false;
 }	
 
-int MainMemory :: bubbleSortPass(int f, int a) {
-	Frame* frame = &(this->data[f]);
-	for (int i = 0; i < frame->validEntries; i++) {
-		if (a < frame->arr[i]) {
-			int temp = frame->arr[i];
-			frame->arr[i] = a;
-			a = temp;
-		}
-	}
-	return a;
-}
-
 class ExtMergeSort{
 public:
 	int runSize; // size of run in terms of number of pages
 	int totalPass; // number of passes performed
 	int totalRuns;
-	int b;
+	int k;
+	// int b;
+	vector<DiskFile> preserve;
 
-	ExtMergeSort(int b){
+	ExtMergeSort(int k){
 		runSize = 0;
 		totalPass = 0;
 		totalRuns = -1;
-		this->b = b;
+		this->k = k;
+		// this->preserve.resize(10);
 	}
 
 	void firstPass(DiskFile &inputFile, MainMemory &memory);
-	void merge(DiskFile &inputFile, MainMemory &memory, int leftStart, int runSize);
+	void merge(DiskFile &inputFile, MainMemory &memory, int leftStart, int runSize, int k);
 	void kWaySort(DiskFile &inputFile, MainMemory &memory);
+	void print(int pass, int page);
 };
+
+void ExtMergeSort :: print(int pass, int page) {
+	pass--, page--;
+	if (pass < 0 || pass >= this->totalPass) {
+		cout << "Pass " << pass+1 << ", Page " << page+1 << ": Invalid Pass number" << endl;
+		return;
+	}
+	int t = this->preserve[pass].totalPages;
+	if (page < 0 || page >= t) {
+		cout << "Pass " << pass+1 << ", Page " << page+1 << ": Invalid Page number" << endl;
+		return;		
+	}
+	int l = this->preserve[pass].data[page].validEntries;
+	cout << "Pass " << pass+1 << ", Page " << page+1 << ": ";
+	for (int i = 0; i < l; i++) {
+		cout << this->preserve[pass].data[page].arr[i] << " ";
+	}
+	cout << endl;
+}
 
 //creates initial runs of B page size
 void ExtMergeSort :: firstPass(DiskFile &inputFile, MainMemory &memory){
 	int c;
-	for (int i = 0; i < inputFile.totalPages; i += this->b) {
+    int b = memory.totalFrames;
+	for (int i = 0; i < inputFile.totalPages; i += b) {
 		c = 0;
-		int r = min(inputFile.totalPages, i+this->b); // [i,r)
-		vector<int> frames(this->b, -1);
+		int r = min(inputFile.totalPages, i+b); // [i,r)
+		vector<int> frames(b, -1);
 		for (int j = i; j < r; j++) {
 			frames[j-i] = memory.loadPage(inputFile, j);
 			c += memory.getValidEntries(frames[j-i]);
@@ -363,12 +374,21 @@ void ExtMergeSort :: firstPass(DiskFile &inputFile, MainMemory &memory){
 	totalRuns = inputFile.totalPages/b;
 	if (inputFile.totalPages % b > 0) totalRuns++;
 	cout << "First Pass Performed" << endl;
-	inputFile.writeDiskFile(); //print file to cout
+	// inputFile.writeDiskFile(); //print file to cout
+	// cout << inputFile.totalPages << endl;
+	int z = inputFile.totalPages;
+	// DiskFile* tempFile = new DiskFile(z);
+    DiskFile tempFile(z);
+	// cout << tempFile.totalPages << endl;
+	tempFile.DiskFileCopy(inputFile, 0, inputFile.totalPages-1);
+	this->preserve.push_back(tempFile);
+	// tempFile.writeDiskFile();
+
 }
 
 //Performs merging of B-1 runs of runSize each
-void ExtMergeSort :: merge(DiskFile &inputFile, MainMemory &memory, int leftStart, int runSize){
-	int k = this->b - 1;
+void ExtMergeSort :: merge(DiskFile &inputFile, MainMemory &memory, int leftStart, int runSize, int k){
+	// int k = this->k;
 	vector<int> runs, runsEnd;
 	int rightEnd = min(leftStart + k*runSize, inputFile.totalPages);
 
@@ -449,20 +469,25 @@ void ExtMergeSort :: merge(DiskFile &inputFile, MainMemory &memory, int leftStar
 
 //Performs k way merge sort on inputFile using memory
 void ExtMergeSort :: kWaySort(DiskFile &inputFile, MainMemory &memory){
-	if(memory.totalFrames < this->b)
-		cout << "Error: B-1 way merge sort requires atleast B frames" << endl; 
+	// if(memory.totalFrames < this->b)
+		// cout << "Error: B-1 way merge sort requires atleast B frames" << endl; 
 	
 	this->firstPass(inputFile, memory);
-
+	int b = memory.totalFrames;
 	int leftStart;
-	int k = this->b - 1;	
-	for(this->runSize = this->b; this->runSize < inputFile.totalPages; this->runSize *= k){
+	int k = (b-this->k)/this->k;	
+	for(this->runSize = b; this->runSize < inputFile.totalPages; this->runSize *= k){
 		cout << "runSize: " << this->runSize << endl;
 		for(leftStart = 0; leftStart < inputFile.totalPages-1; leftStart += k*this->runSize){
 			cout << "calling " << k << "-way merge for < " << leftStart  << " >" << endl;
-			this->merge(inputFile, memory, leftStart, this->runSize);
+			this->merge(inputFile, memory, leftStart, this->runSize, k);
 		}
 		// inputFile.writeDiskFile();
+		int z = inputFile.totalPages;
+		DiskFile tempFile(z);
+		tempFile.DiskFileCopy(inputFile, 0, inputFile.totalPages-1);
+		this->preserve.push_back(tempFile);
+		// tempFile.writeDiskFile();
 		totalPass++;
 	}
 
@@ -471,27 +496,40 @@ void ExtMergeSort :: kWaySort(DiskFile &inputFile, MainMemory &memory){
 
 int main()
 {
-	int x;
+
+	int page_size;
+	cin >> page_size;
+    DISK_PAGE_SIZE = page_size;
+    MEM_FRAME_SIZE = page_size;
+
 	//reads size of main memory in terms of number of frames available
-	cin >> x;
-
+    int d;
+    cin >> d;
 	//create main memory of x frames
-	MainMemory mm(x);
+	MainMemory mm(d);
 
-	int b;
-	cin >> b;
+	int k;
+	cin >> k;
 
 	//create a file by taking input from cin
 	DiskFile f;
 	f.readDiskFile();
-	f.writeDiskFile();
+	// f.writeDiskFile();
 
-	ExtMergeSort e(b);
+
+	ExtMergeSort e(k);
 	
 	//call 2 way externalmerge sort
 	e.kWaySort(f,mm);
 
 	//output file by using cout
 	f.writeDiskFile(); 
-
+    int pass, page;
+    while (1) {
+        cin >> pass;
+        if (pass == -1) break;
+        cin >> page;
+        e.print(pass, page);
+    }
+    return 0;
 }
