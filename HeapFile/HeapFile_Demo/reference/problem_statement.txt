@@ -1,0 +1,65 @@
+Implement Heap File with Variable Length Records
+
+Heap File is a doubly linked list of data pages.
+Structure of each page is as per the Raghu Ramakrishnan’s book. Each slot in directory should contain following information. 
+	Record identifier (provided by the user)
+	Record size
+	Start location of the record in the page
+	Is the record present of deleted (only this field will take one byte)
+Assume that each value takes four bytes.
+
+
+Input will be of the following type
+1: Create new data file
+2: Insert
+3: Delete
+4: Display file structure
+-1: Exit the program
+
+Create new data file
+Provide size of data page in bytes
+Provide initial number of pages
+
+Insert
+Provide record length
+Provide record identifier
+
+
+Delete
+Provide record identifier
+
+Display file structure
+How many pages does the page have
+Contents of each page
+List the whole directory structure of the page (both present and deleted record list)
+
+
+
+Insertion Logic:
+Find the first page that can accommodate the given record. If none of the existing pages can accommodate the given record then append a new page at the end of the linked list.
+Deletion logic
+Just mark the record as deleted in the page. No shifting of records is required.
+
+Example input
+1
+500
+2
+//New file with two pages, each having 500 bytes
+2
+12
+1005
+//insert record of size 12 bytes and identifier 1005
+2
+27
+1009
+//insert record of size 27 bytes and identifier 1009
+3
+1002
+//delete record with identifier 1002. Should result in error message
+3
+1005
+//delete record with identifier 1005
+4
+//display file structure
+-1
+//exit the program
