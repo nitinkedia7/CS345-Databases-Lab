@@ -1,5 +1,5 @@
 #include <bits/stdc++.h>
-#define DISK_FILE_SIZE 1000
+#define DISK_FILE_SIZE 10000
 // #define DISK_PAGE_SIZE 100
 #define DIR_ENTRY_LENGTH 13
 using namespace std;
