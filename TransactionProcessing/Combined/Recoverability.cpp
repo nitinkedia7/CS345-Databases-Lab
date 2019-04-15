@@ -9,6 +9,7 @@ public:
 	void PossibleChains();  // to find all possible chains
 	void isRecoverable();  // to check whether schedule is recoverable or not
 	void isCascadeless();  // to check whether schedule is cascadeless or not
+    void isSerializable();
 
 private:
 	vector<pair<int, pair<char,int> > > transaction; 
@@ -19,6 +20,8 @@ private:
     // to store all the possible chains, each chain represents collection of read operation on a dataitem that is written by a transaction before those read operations
     vector< pair<int,pair<int,int> > > firstReadArray; 
     // it represents a vector where each elements is a tuple containing tid of write operation, position of first read in a chain and its tid  
+    set<int> tids;
+    void dfs_visit(vector<vector<bool>> &adjmatrix, vector<int> &color, vector<int> &topolist, int u, bool &cycle);
 };
 
 void Transactions::readInput(){
@@ -29,6 +32,7 @@ void Transactions::readInput(){
 	int Tid, DataItem=0;
     char Opr;
     while(cin>>Tid){
+        tids.insert(Tid);
         cin>>Opr;
         if(Opr!='C')
             cin>>DataItem;
@@ -73,17 +77,89 @@ void Transactions::PossibleChains(){
     }
 }
 
+void Transactions :: dfs_visit(vector<vector<bool>> &adjmatrix, vector<int> &color, vector<int> &topolist, int u, bool &cycle) {
+    color[u] = 1; // 1- gray
+    for (int v = 0; v < tids.size(); v++) {
+        if (!adjmatrix[u][v]) continue;
+        if (color[v] == 0) {
+            dfs_visit(adjmatrix, color, topolist, v, cycle);
+        }
+        if (color[v] == 1) // back edge
+            cycle = true;
+    }
+    color[u] = 2;
+    topolist.push_back(u);
+}   
+
+void Transactions::isSerializable() {
+    unordered_map<int, int> reversemap, map; // tid map to 0 to tids.size()-1
+    int t = 0;
+    set<int> :: iterator x;
+    for (x = tids.begin(); x != tids.end(); x++) {
+        reversemap[*x] = t;
+        map[t] = *x;
+        t++;
+    }
+    
+    vector<vector<bool>> adjmatrix(tids.size(), vector<bool>(tids.size(), false));
+    for (int i = 0; i < transaction.size(); i++) {
+        for (int j = i+1; j < transaction.size(); j++) {
+            int tid1 = transaction[i].first, tid2 = transaction[j].first;
+            if (tid1 == tid2) // same transaction id
+                continue;
+            if (transaction[i].second.first == 'C' || transaction[j].second.first == 'C') // commit op are not needed for serializability
+                continue;
+            if (transaction[i].second.second != transaction[j].second.second) // different data item
+                continue;
+            if (transaction[i].second.first == 'R' && transaction[j].second.first == 'R') // read on same data item
+                continue;
+
+            adjmatrix[reversemap[tid1]][reversemap[tid2]] = true;
+            // cout << tid1 << transaction[i].second.first << transaction[i].second.second << endl;
+            // cout << tid2 << transaction[j].second.first << transaction[j].second.second << endl;             
+            // cout << endl;
+        }
+    }
+    for (int i = 0; i < tids.size(); i++) {
+        for (int j = 0; j < tids.size(); j++) {
+            cout << adjmatrix[i][j] << " ";
+        }
+        cout << endl;
+    }
+    // dfs
+    vector<int> color(tids.size(), 0); // 0-white 
+    vector<int> topolist; 
+    bool cycle = false;
+    for (int i = 0; i < tids.size(); i++) {
+        if (color[i] == 0) {
+            dfs_visit(adjmatrix, color, topolist, i, cycle);
+        }
+    }
+    if (cycle) {
+        cout << "Not serializable, cycle detected in precedence graph" << endl;
+    }
+    else {
+        cout << "Yes, the execution sequence is serializable" << endl;
+        cout << "Equivalent serial order: " << endl;
+        reverse(topolist.begin(), topolist.end());
+        for (int i = 0; i < topolist.size(); i++) {
+            cout << map[topolist[i]] << " ";
+        }
+        cout << endl;  
+    }
+}
+
 void Transactions::isRecoverable(){
 	/*
          --> this method checks whether the given schedule is recoverable or not
 	*/
-    for (int i = 0; i < chain.size(); i++) {
-        cout << "TID " << chain[i].first << ": ";
-        for (int j = 0; j < chain[i].second.size(); j++) {
-            cout << chain[i].second[j] << " ";
-        }  
-        cout << endl;
-    }
+    // for (int i = 0; i < chain.size(); i++) {
+    //     cout << "TID " << chain[i].first << ": ";
+    //     for (int j = 0; j < chain[i].second.size(); j++) {
+    //         cout << chain[i].second[j] << " ";
+    //     }  
+    //     cout << endl;
+    // }
 	for(int i=0; i<chain.size(); i++){
         int x = commit[chain[i].first];
         for(int j=0; j<chain[i].second.size(); j++){
@@ -114,6 +190,8 @@ void Transactions::isCascadeless(){
     cout<<"Yes"<<endl;
 }
 
+
+
 int main() {
 	Transactions obj;
 	obj.readInput();   // to read input file
@@ -121,6 +199,7 @@ int main() {
 	obj.PossibleChains(); //to find all possible chains
 	obj.isRecoverable();  // to check whether schedule is recoverable or not
 	obj.isCascadeless(); // to check whether schedule is cascadeless or not 
+    obj.isSerializable();
 
 	return 0;
 }
