@@ -1,0 +1,35 @@
+5
+A 1
+B 10
+C 100
+D 1000
+E 10000
+S 5
+R 5 E
+R 5 D
+W 5 E 20000
+R 5 A
+W 5 A 2
+W 5 D 2000
+R 5 A
+S 4
+W 4 C 50
+S 3
+W 3 B 5
+R 5 B
+R 5 C
+R 5 E
+R 5 D
+W 5 A 2
+S 2
+S 1
+R 1 A
+R 1 B
+R 2 C
+R 2 C
+R 1 D
+R 1 E
+C 4
+C 3
+C 2
+C 1
